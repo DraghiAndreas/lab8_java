@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 class MainApp {
@@ -198,6 +199,51 @@ class MainApp {
         }
     }
 
+    public static void excursiiDupaNumeSeparat(Connection connection) {
+        System.out.print("Numele persoanei: ");
+        String nume = scanner.nextLine();
+
+        ArrayList<Integer> id_persoane = new ArrayList<>();
+        String sql1 = "select * from persoane";
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(sql1)) {
+            while (rs.next()) {
+                if (rs.getString("nume").equals(nume))
+                    id_persoane.add(rs.getInt("id"));
+            }
+        } catch (SQLException e) {
+            System.out.println(sql1);
+            e.printStackTrace();
+            return;
+        }
+
+        if (id_persoane.isEmpty()) {
+            System.out.println("Nu exista nicio persoana cu numele " + nume);
+            return;
+        }
+
+        String sql2 = "select * from excursii where id_persoana=?";
+        try (PreparedStatement ps = connection.prepareStatement(sql2)) {
+            for (int id : id_persoane) {
+                ps.setInt(1, id);
+                try (ResultSet rs = ps.executeQuery()) {
+                    boolean are_excursii = false;
+                    while (rs.next()) {
+                        are_excursii = true;
+                        System.out.println("Persoana " + id + " - id_excursie=" + rs.getInt("id_excursie")
+                                + ", destinatia=" + rs.getString("destinatia")
+                                + ", anul=" + rs.getInt("anul"));
+                    }
+                    if (!are_excursii)
+                        System.out.println("Persoana " + id + " nu are excursii");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(sql2);
+            e.printStackTrace();
+        }
+    }
+
     // 5. Persoanele care au vizitat o destinatie
     public static void persoaneDupaDestinatie(Connection connection) {
         System.out.print("Destinatia: ");
@@ -301,7 +347,7 @@ class MainApp {
                     case 1: adaugarePersoana(connection); break;
                     case 2: adaugareExcursie(connection); break;
                     case 3: afisarePersoaneSiExcursii(connection); break;
-                    case 4: excursiiDupaNume(connection); break;
+                    case 4: excursiiDupaNumeSeparat(connection); break;
                     case 5: persoaneDupaDestinatie(connection); break;
                     case 6: persoaneDupaAn(connection); break;
                     case 7: stergereExcursie(connection); break;
