@@ -258,31 +258,23 @@ class MainApp {
     }
 
     //8. Stergerea unei persoane si a excursiilor aferente (Cascade delete)
-
     public static void stergerePersoana(Connection connection) {
         int id = citireIntreg("Id-ul persoanei: ");
 
-        // intai se sterg excursiile (cheie externa), apoi persoana
-        String sql1 = "delete from excursii where id_persoana=?";
-        String sql2 = "delete from persoane where id=?";
-        try (PreparedStatement ps1 = connection.prepareStatement(sql1);
-             PreparedStatement ps2 = connection.prepareStatement(sql2)) {
-            ps1.setInt(1, id);
-            int nr_excursii = ps1.executeUpdate();
-
-            ps2.setInt(1, id);
-            int nr_persoane = ps2.executeUpdate();
-
-            if (nr_persoane > 0)
-                System.out.println("Persoana a fost stearsa impreuna cu " + nr_excursii + " excursii");
+        // excursiile persoanei se sterg automat (ON DELETE CASCADE)
+        String sql = "delete from persoane where id=?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            int nr_randuri = ps.executeUpdate();
+            if (nr_randuri > 0)
+                System.out.println("Persoana a fost stearsa impreuna cu excursiile ei");
             else
                 System.out.println("Nu se gaseste nici o persoana cu id-ul specificat");
         } catch (SQLException e) {
+            System.out.println(sql);
             e.printStackTrace();
         }
     }
-
-    // ---------------- meniul ----------------
 
     public static void afisareMeniu() {
         System.out.println("\n---------- MENIU ----------");
